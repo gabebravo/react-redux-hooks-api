@@ -1,20 +1,24 @@
 import { createAction, handleActions } from 'redux-actions';
 
 const defaultState = {
-  todos: [
-    {
-      userId: 1,
-      id: 1,
-      title: 'delectus aut autem',
-      completed: false
-    }
-  ]
+  todos: []
+};
+
+const buildNewTodo = title => {
+  const uniqueId = Math.floor(Math.random() * 10) + 1;
+  return {
+    userId: uniqueId,
+    id: uniqueId,
+    title,
+    completed: false
+  };
 };
 
 // ACTIONS
 export const setTodos = createAction('SET_TODOS');
 export const addTodo = createAction('ADD_TODO');
 export const deleteTodo = createAction('DELETE_TODO');
+export const markComplete = createAction('MARK_COMPLETE');
 
 // REDUCERS
 export default handleActions(
@@ -26,12 +30,21 @@ export default handleActions(
     }),
     [addTodo]: (state, { payload }) => ({
       ...state,
-      todos: [...state.todos, payload]
+      todos: [...state.todos, buildNewTodo(payload)]
     }),
     [deleteTodo]: (state, { payload }) => ({
       ...state,
       todos: state.todos.filter(todo => todo.id !== payload.id)
-    })
+    }),
+    [markComplete]: (state, { payload }) => {
+      const mappedTodos = state.todos.map(todo =>
+        todo.id === payload.id ? { ...todo, completed: true } : todo
+      );
+      return {
+        ...state,
+        todos: mappedTodos
+      };
+    }
   },
   defaultState
 );
@@ -43,10 +56,8 @@ export const fetchTodos = () => (dispatch, getState) => {
     .then(res => res.json())
     .then(data => {
       if (data.length > 0) {
-        console.log('data', data);
-        // const [user] = data;
-        // const transformedUser = transformUser(user);
-        // dispatch(setUserData({ data: transformedUser }));
+        const tenTodos = data.slice(0, 3);
+        dispatch(setTodos(tenTodos));
       }
     })
     .catch(err => console.log('error', err));
